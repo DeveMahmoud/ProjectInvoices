@@ -1,0 +1,80 @@
+﻿@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="d-flex justify-content-center align-items-center min-vh-100 bg-light">
+    <div class="card shadow-lg p-4 rounded-4" style="width: 100%; max-width: 400px;">
+        <h3 class="text-center mb-4 text-primary fw-bold">🔐 Login</h3>
+
+        <form id="loginForm">
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Username</label>
+                <input type="text" class="form-control rounded-pill" id="Username" placeholder="Enter your username" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Password</label>
+                <input type="password" class="form-control rounded-pill" id="Password" placeholder="Enter your password" required />
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 rounded-pill">
+                <i class="bi bi-box-arrow-in-right"></i> Login
+            </button>
+        </form>
+
+        <div id="loginMessage" class="alert d-none mt-3 text-center"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $("#loginForm").on("submit", function (e) {
+            e.preventDefault();
+
+            $.ajax({
+                url: "/Login/Login",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    userName: $("#Username").val(),
+                    password: $("#Password").val()
+                }),
+                success: function (res) {
+                    $("#loginMessage")
+                        .removeClass("d-none alert-danger")
+                        .addClass("alert-success")
+                        .html("✅ Login successful! Redirecting...");
+
+                    localStorage.setItem("token", res.token);
+
+                    debugger
+                    $.ajax({
+                        url: "/Invoice/CreateInvoice",
+                        type: "GET",
+                        headers: {
+                            "Authorization": "Bearer " + res.token
+                        },
+                        success: function (html) {
+                            document.open();
+                            document.write(html);
+                            document.close();
+                        },
+                        error: function () {
+                            $("#loginMessage")
+                                .removeClass("d-none alert-success")
+                                .addClass("alert-danger")
+                                .text("❌ Unauthorized - token invalid.");
+                        }
+                    });
+                },
+                error: function () {
+                    $("#loginMessage")
+                        .removeClass("d-none alert-success")
+                        .addClass("alert-danger")
+                        .text("❌ Invalid username or password.");
+                }
+            });
+        });
+    </script>
+}
